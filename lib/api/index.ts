@@ -1,7 +1,5 @@
 import axios from "axios";
-
-export const DOMAIN_NAME = "http://localhost:3000";
-// export const DOMAIN_NAME = "https://parkour-techs.vercel.app";
+export const DOMAIN_NAME = "https://parkourdevs-test.vercel.app";
 
 export const baseApi = axios.create({
   baseURL: DOMAIN_NAME + "/api",
