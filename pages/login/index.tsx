@@ -5,7 +5,7 @@ import { Toaster } from "sonner";
 
 const LoginPage = () => {
   return (
-    <div className="w-full p-0 m-0 h-screen overflow-hidden bg-lightBg">
+    <div className="w-full p-0 m-0 h-screen overflow-hidden bg-backgrounds-light">
       <SemicircleBackground />
       <LoginContentBox />
       <Toaster position="top-center" expand={false} />
