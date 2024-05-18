@@ -1,7 +1,8 @@
+import AppPage from "@/pages/app";
 import React from "react";
 
 const page = () => {
-  return <div>page</div>;
+  return <AppPage />;
 };
 
 export default page;

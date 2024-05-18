@@ -1,17 +1,13 @@
 import * as z from "zod"
-import { STATUS } from "@prisma/client"
 import { CompleteUser, relatedUserSchema } from "./index"
 
 export const teamMembersSchema = z.object({
-  id: z.string(),
+  id: z.number().int(),
   email: z.string(),
   name: z.string(),
-  ci: z.number().int(),
   phone: z.string(),
-  direction: z.string(),
+  address: z.string(),
   salary: z.number().int(),
-  hours: z.number().int(),
-  status: z.nativeEnum(STATUS),
   createdAt: z.date().nullish(),
   userId: z.string(),
 })

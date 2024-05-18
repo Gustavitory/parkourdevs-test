@@ -37,22 +37,13 @@ model Validations{
 
 
 model TeamMembers {
-  id        String    @id @default(cuid())
+  id        Int    @id
   email     String
   name      String
-  ci        Int
   phone     String
-  direction String
+  address String
   salary    Int
-  hours     Int
-  status    STATUS
   createdAt DateTime? @default(now())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-enum STATUS {
-  active
-  vacations
-  inactive
 }

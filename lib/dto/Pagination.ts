@@ -1,16 +1,16 @@
 import * as z from "zod";
 
 export const ZApiPagination = z.object({
-  take: z.string().pipe(
+  take: z.number().pipe(
     z.coerce
       .number({
         required_error: "Request limit is required",
         invalid_type_error: "Request limit must be a number",
       })
-      .positive("Invalid")
+      .positive()
       .lte(100, "Query's limit is too big")
   ),
-  skip: z.string().pipe(
+  skip: z.number().pipe(
     z.coerce
       .number({
         required_error: "Start number is required",
