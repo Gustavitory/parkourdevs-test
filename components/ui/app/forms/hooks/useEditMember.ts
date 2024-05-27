@@ -70,7 +70,7 @@ export const useEditMember = () => {
     const { email, name, phone, address, salary, id } = data;
     var regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const parsedId = Number(id);
-    if (name.length < 2 && name.length !== 0) {
+    if (name.length < 2 && name.length > 0) {
       setError({ name: "Name must contain at least two letters" });
     }
     if (id.length !== 0) {
