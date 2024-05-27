@@ -26,7 +26,8 @@ export const CreateMemberForm = ({ controller, isOpen }: ModalProps) => {
               className="space-y-6"
               onSubmit={(e) =>
                 handleSubmit(e).then((res) => {
-                  if (res !== "invalid") controller(false);
+                  if (res !== "invalid")
+                    setTimeout(() => controller(false), 500);
                 })
               }
             >
