@@ -1,4 +1,15 @@
 import { env } from "@/lib/env.mjs";
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-export const resend = new Resend(env.RESEND_API_KEY);
+export const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: env.MAILER__USER,
+    pass: env.MAILER__PASS,
+  },
+  tls: {
+    rejectUnauthorized: false,
+  },
+});

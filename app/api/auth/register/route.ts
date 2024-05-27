@@ -9,7 +9,7 @@ import { ValidationError } from "@/lib/err/types";
 import { EndpointErrorHandler } from "@/lib/err";
 import { newUserDTO } from "@/lib/dto/User";
 import { db } from "@/lib/db";
-import { resend } from "@/mailer";
+import { transporter } from "@/mailer";
 
 export const POST = async (req: Request) => {
   try {
@@ -47,8 +47,8 @@ export const POST = async (req: Request) => {
     const emailHtml = render(
       ConfirmationEmail({ userName: body.name, code: validation.code })
     );
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
+    await transporter.sendMail({
+      from: "ggrieraya.freelance@gmail.com",
       to: body.email.toLocaleLowerCase(),
       subject: body.name,
       html: emailHtml,

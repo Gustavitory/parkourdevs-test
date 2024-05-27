@@ -1,11 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  CaretSortIcon,
-  ChevronDownIcon,
-  DotsHorizontalIcon,
-} from "@radix-ui/react-icons";
+import { CaretSortIcon, DotsHorizontalIcon } from "@radix-ui/react-icons";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,10 +16,8 @@ import {
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -39,11 +33,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { PlusIcon, TrashIcon } from "lucide-react";
+import { LoaderPinwheel, PlusIcon, TrashIcon } from "lucide-react";
 import { CompleteTeamMembers } from "@/prisma/zod";
 import { useState } from "react";
-import { getMembersList } from "@/lib/members/queries";
 import { CreateMemberForm } from "../forms/CreateMember";
+import { useTeamMembersContext } from "../contexts/TeamMembersContext";
+import { EditMemberForm } from "../forms/EditMember";
 
 export const columns: ColumnDef<CompleteTeamMembers>[] = [
   {
@@ -91,8 +86,9 @@ export const columns: ColumnDef<CompleteTeamMembers>[] = [
     id: "actions",
     enableHiding: false,
     cell: ({ row }) => {
-      const payment = row.original;
-
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      const { delMember, setEditing, openEdit } = useTeamMembersContext();
+      const { id } = row.original;
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -105,13 +101,16 @@ export const columns: ColumnDef<CompleteTeamMembers>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               className="hover:bg-slate-100 cursor-pointer"
-              onClick={() => alert("edit")}
+              onClick={() => {
+                setEditing(row.original);
+                openEdit(true);
+              }}
             >
               Edit
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => alert("delete")}
+              onClick={() => delMember(id.toString())}
               className="bg-red-500 text-white cursor-pointer hover:bg-red-600"
             >
               <TrashIcon className="w-5 h-5 text-white mr-1" /> Delete
@@ -125,29 +124,28 @@ export const columns: ColumnDef<CompleteTeamMembers>[] = [
 
 export function List() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [createModalIsOpen, setCreateModalIsOpen] = React.useState(false);
-  const [members, setMembers] = useState<CompleteTeamMembers[]>([]);
+  const {
+    isAddOpen,
+    isGettingMembers,
+    data,
+    openNew,
+    setEditing,
+    memberToEdit,
+    isEditOpen,
+    openEdit,
+  } = useTeamMembersContext();
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 6,
+  });
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  React.useEffect(() => {
-    const getMembers = async () => {
-      try {
-        const members = (await getMembersList({ skip: 5, take: 10 })) as {
-          error: boolean;
-          message: string[];
-          payload: { workers: CompleteTeamMembers[] };
-        };
-        setMembers(members.payload.workers);
-      } catch {}
-    };
-    getMembers();
-  }, [createModalIsOpen]);
 
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable<CompleteTeamMembers>({
-    data: members,
+    data,
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
@@ -162,29 +160,31 @@ export function List() {
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination,
     },
+    onPaginationChange: setPagination,
   });
 
   return (
     <div className="w-full flex flex-col mt-5 rounded-lg h-full px-5">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter emails..."
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
+          placeholder="Filter name..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
+            table.getColumn("name")?.setFilterValue(event.target.value)
           }
           className="max-w-sm ring-1 ring-secondaryColor focus:border-none  focus:outline-none"
         />
         <Button
           variant="outline"
           className="ml-auto ring-1 ring-secondaryColor"
-          onClick={() => setCreateModalIsOpen(true)}
+          onClick={() => openNew(true)}
         >
           <PlusIcon className="h-4 w-4 text-secondaryColor" />
         </Button>
       </div>
-      <div className="rounded-md ring-secondaryColor ring-1 w-full flex-1">
+      <div className="rounded-md ring-secondaryColor ring-1 min-h-[27.5em] bg-white w-full">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -194,10 +194,9 @@ export function List() {
                     <TableHead key={header.id}>
                       {header.isPlaceholder
                         ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                        : flexRender(header.column.columnDef.header, {
+                            ...header.getContext(),
+                          })}
                     </TableHead>
                   );
                 })}
@@ -226,19 +225,22 @@ export function List() {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center"
+                  className=" h-24 align-middle items-center text-center"
                 >
-                  No results.
+                  {isGettingMembers ? (
+                    <LoaderPinwheel className="text-secondaryColor w-10 h-10 m-auto animate-spin" />
+                  ) : (
+                    "No data"
+                  )}
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center justify-end space-x-2 py-4 h-max">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
+          {table.getFilteredRowModel().rows.length} total items.
         </div>
         <div className="space-x-2">
           <Button
@@ -259,9 +261,14 @@ export function List() {
           </Button>
         </div>
       </div>
-      <CreateMemberForm
-        controller={setCreateModalIsOpen}
-        isOpen={createModalIsOpen}
+      <CreateMemberForm controller={openNew} isOpen={isAddOpen} />
+      <EditMemberForm
+        isOpen={isEditOpen}
+        item={memberToEdit}
+        close={() => {
+          setEditing(undefined);
+          openEdit(false);
+        }}
       />
     </div>
   );

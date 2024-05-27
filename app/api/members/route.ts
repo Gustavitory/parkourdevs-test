@@ -15,11 +15,9 @@ import { CompleteTeamMembers } from "@/prisma/zod";
 export const GET = async (req: Request) => {
   try {
     let params = new URLSearchParams(req.url.split("/worker").at(-1));
+    console.log(params);
 
-    const pagination = {
-      skip: Number(params.get("skip")),
-      take: Number(params.get("take")),
-    };
+    const page = Number(params.get("page"));
 
     const session = await getUserAuth();
 
@@ -32,8 +30,6 @@ export const GET = async (req: Request) => {
       where: {
         userId: userSession!.id,
       },
-      skip: 3,
-      take: 10,
     });
 
     return CustomResponse<
@@ -43,7 +39,7 @@ export const GET = async (req: Request) => {
         error: false,
         message: ["Success"],
         payload: {
-          workers: [],
+          workers: workers,
         },
       },
       201
@@ -70,7 +66,13 @@ export const POST = async (req: Request) => {
 
     if (!ValidPhones[phoneInit as TValidPhones])
       throw new ValidationError("Invalid phone number", 400);
-    console.log(`session: ${session}`);
+
+    const idIsAlreadyInUse = await db.teamMembers.findFirst({
+      where: {
+        id: body.id,
+      },
+    });
+    if (idIsAlreadyInUse) throw new ValidationError("Id already in use", 400);
     const worker = await db.teamMembers.create({
       data: {
         ...body,

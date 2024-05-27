@@ -17,11 +17,14 @@ export const PUT = async (req: Request) => {
 
     const session = await getUserAuth();
 
-    if (!session)
-      throw new AuthError(
-        "Debe iniciar sesión para actualizar un trabajador",
-        401
-      );
+    if (!session) throw new AuthError("Unauthorized", 401);
+
+    const user = await db.user.findUnique({
+      where: {
+        email: session.session?.user.email,
+      },
+    });
+    if (!user) throw new AuthError("Unauthorized: Invalid session", 401);
 
     const body = ZUpdateTeamMember.parse(await req.json());
 
@@ -37,7 +40,7 @@ export const PUT = async (req: Request) => {
 
     if (!workerExists) throw new ValidationError("Inexistent worker", 404);
 
-    if (workerExists.userId !== session.session?.user.id)
+    if (workerExists.userId !== user.id)
       throw new ValidationError("Unauthorized", 401);
 
     let phoneInit = body.phone && body.phone.slice(0, 4);
@@ -77,9 +80,14 @@ export const DELETE = async (req: Request) => {
     let workerId = Number(req.url.split("/").at(-1)!);
 
     const session = await getUserAuth();
+    if (!session) throw new AuthError("Unauthorized: Invalid session", 401);
 
-    if (!session) throw new AuthError("Unauthorized", 401);
-
+    const user = await db.user.findUnique({
+      where: {
+        email: session.session?.user.email,
+      },
+    });
+    if (!user) throw new AuthError("Unauthorized: Invalid session", 401);
     let workerExists = await db.teamMembers.findUnique({
       where: {
         id: workerId,
@@ -92,7 +100,7 @@ export const DELETE = async (req: Request) => {
 
     if (!workerExists) throw new ValidationError("Not found", 404);
 
-    if (workerExists.userId !== session.session?.user.id)
+    if (workerExists.userId !== user.id)
       throw new ValidationError("Unauthorized", 401);
 
     await db.teamMembers.delete({
